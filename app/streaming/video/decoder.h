@@ -6,7 +6,7 @@
 
 #define SDL_CODE_FRAME_READY 0
 
-#define MAX_SLICES 4
+#define MAX_SLICES 8
 
 typedef struct _VIDEO_STATS {
     uint32_t receivedFrames;

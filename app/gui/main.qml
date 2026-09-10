@@ -54,7 +54,7 @@ ApplicationWindow {
                 xWaylandDialog.open()
             }
             else {
-                noHwDecoderDialog.open()
+                // noHwDecoderDialog.open()  // BC-250: expected software decoding
             }
         }
 
