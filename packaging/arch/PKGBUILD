@@ -1,0 +1,73 @@
+# Maintainer: grykom (https://github.com/grykom)
+# Based on the Arch Linux moonlight-qt packaging maintained by Sven-Hendrik Haase.
+pkgname=moonlight-qt-bc250
+pkgver=6.1.0.bc250.1
+pkgrel=1
+pkgdesc='Moonlight client with configurable CPU decoder threads for BC-250'
+arch=('x86_64')
+url='https://github.com/grykom/moonlight-qt-bc250'
+license=('GPL-3.0-or-later')
+depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'ffmpeg' 'sdl2' 'sdl2_ttf'
+         'openssl' 'opus' 'libplacebo' 'libva' 'libvdpau' 'libdrm' 'libx11'
+         'wayland' 'libglvnd' 'libavcodec.so' 'libavutil.so' 'libswscale.so'
+         'libplacebo.so')
+makedepends=('git' 'vulkan-headers')
+optdepends=('qt6-wayland: native Wayland support for the settings window')
+provides=('moonlight-qt=6.1.0')
+conflicts=('moonlight-qt')
+options=('!debug' '!lto')
+
+_commit=f128a1136d4cbad6bc6b47366b5ca9acf77d9de2
+source=(
+  "moonlight-qt::git+https://github.com/grykom/moonlight-qt-bc250.git#commit=$_commit"
+  'moonlight-common-c::git+https://github.com/moonlight-stream/moonlight-common-c.git#commit=8599b6042a4ba27749b0f94134dd614b4328a9bc'
+  'qmdnsengine::git+https://github.com/cgutman/qmdnsengine.git#commit=b7a5a9f225d5e14b39f9fd1f905c4f505cf2ee99'
+  'SDL_GameControllerDB::git+https://github.com/gabomdq/SDL_GameControllerDB.git#commit=e5a5fa2ac6e645d72c619ea99520a3a4586ee005'
+  'h264bitstream::git+https://github.com/aizvorski/h264bitstream.git#commit=34f3c58afa3c47b6cf0a49308a68cbf89c5e0bff'
+  'enet::git+https://github.com/cgutman/enet.git#commit=bbf71856bb144729af4ed08af6bc2f5826a96db5'
+  'BC250.md'
+)
+# Git sources are pinned to full commit IDs, including each required submodule.
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            '1905b573813968b097829a8926adcb17d73f8ea9b08fe5334644c789026b579b')
+
+prepare() {
+  cd "$srcdir/moonlight-qt"
+  local _paths=(moonlight-common-c/moonlight-common-c qmdnsengine/qmdnsengine
+                app/SDL_GameControllerDB h264bitstream/h264bitstream)
+  git submodule init -- "${_paths[@]}"
+  git config submodule.moonlight-common-c/moonlight-common-c.url "$srcdir/moonlight-common-c"
+  git config submodule.qmdnsengine/qmdnsengine.url "$srcdir/qmdnsengine"
+  git config submodule.app/SDL_GameControllerDB.url "$srcdir/SDL_GameControllerDB"
+  git config submodule.h264bitstream/h264bitstream.url "$srcdir/h264bitstream"
+  git -c protocol.file.allow=always submodule update --init -- "${_paths[@]}"
+
+  cd moonlight-common-c/moonlight-common-c
+  git submodule init -- enet
+  git config submodule.enet.url "$srcdir/enet"
+  git -c protocol.file.allow=always submodule update --init -- enet
+}
+
+build() {
+  mkdir -p "$srcdir/build"
+  cd "$srcdir/build"
+  qmake6 "$srcdir/moonlight-qt/moonlight-qt.pro" \
+    "QMAKE_CFLAGS=$CFLAGS -march=x86-64 -mtune=generic" \
+    "QMAKE_CXXFLAGS=$CXXFLAGS -march=x86-64 -mtune=generic" \
+    "QMAKE_LFLAGS=$LDFLAGS" PREFIX=/usr
+  make release
+}
+
+check() {
+  cd "$srcdir/moonlight-qt"
+  g++ -std=c++11 -Wall -Wextra -Werror -Iapp \
+    tests/bc250_decoder_threads.cpp -o "$srcdir/build/bc250-decoder-threads-test"
+  "$srcdir/build/bc250-decoder-threads-test"
+}
+
+package() {
+  cd "$srcdir/build"
+  make INSTALL_ROOT="$pkgdir" install
+  install -Dm644 "$srcdir/BC250.md" "$pkgdir/usr/share/doc/$pkgname/BC250.md"
+  printf '%s\n' "$_commit" > "$pkgdir/usr/share/doc/$pkgname/SOURCE_COMMIT"
+}
