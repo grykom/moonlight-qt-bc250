@@ -129,6 +129,9 @@ public:
     Q_PROPERTY(bool enableHdr MEMBER enableHdr NOTIFY enableHdrChanged)
     Q_PROPERTY(bool enableYUV444 MEMBER enableYUV444 NOTIFY enableYUV444Changed)
     Q_PROPERTY(VideoDecoderSelection videoDecoderSelection MEMBER videoDecoderSelection NOTIFY videoDecoderSelectionChanged)
+    Q_PROPERTY(int softwareDecoderThreads MEMBER softwareDecoderThreads NOTIFY softwareDecoderThreadsChanged)
+    Q_PROPERTY(int availableDecoderThreads READ getAvailableDecoderThreads CONSTANT)
+    Q_PROPERTY(int effectiveSoftwareDecoderThreads READ getEffectiveSoftwareDecoderThreads NOTIFY softwareDecoderThreadsChanged)
     Q_PROPERTY(WindowMode windowMode MEMBER windowMode NOTIFY windowModeChanged)
     Q_PROPERTY(WindowMode recommendedFullScreenMode MEMBER recommendedFullScreenMode CONSTANT)
     Q_PROPERTY(UIDisplayMode uiDisplayMode MEMBER uiDisplayMode NOTIFY uiDisplayModeChanged)
@@ -142,6 +145,9 @@ public:
     Q_PROPERTY(Language language MEMBER language NOTIFY languageChanged);
 
     Q_INVOKABLE bool retranslate();
+
+    int getAvailableDecoderThreads() const;
+    int getEffectiveSoftwareDecoderThreads() const;
 
     // Directly accessible members for preferences
     int width;
@@ -175,6 +181,7 @@ public:
     bool enableHdr;
     bool enableYUV444;
     VideoDecoderSelection videoDecoderSelection;
+    int softwareDecoderThreads; // 0 = Auto; otherwise 4, 8, 12, or 16
     WindowMode windowMode;
     WindowMode recommendedFullScreenMode;
     UIDisplayMode uiDisplayMode;
@@ -199,6 +206,7 @@ signals:
     void enableHdrChanged();
     void enableYUV444Changed();
     void videoDecoderSelectionChanged();
+    void softwareDecoderThreadsChanged();
     void uiDisplayModeChanged();
     void windowModeChanged();
     void framePacingChanged();
@@ -223,4 +231,3 @@ private:
 
     QQmlEngine* m_QmlEngine;
 };
-

@@ -666,6 +666,22 @@
 <context>
     <name>SettingsView</name>
     <message>
+        <source>CPU decoder threads (BC-250)</source>
+        <translation>Wątki dekodowania CPU (BC-250)</translation>
+    </message>
+    <message>
+        <source>Automatic (up to 8)</source>
+        <translation>Automatycznie (maks. 8)</translation>
+    </message>
+    <message>
+        <source>Available CPU threads: %1. CPU decoding will use: %2.</source>
+        <translation>Dostępne wątki CPU: %1. Dekodowanie na CPU użyje: %2.</translation>
+    </message>
+    <message>
+        <source>All options work without CPU unlock: selecting 16 with 12 available threads uses 12. Using all 16 requires CPU unlock and 16 threads visible to the system. Auto uses up to 8. Changes apply to the next connection; more threads are not always faster.</source>
+        <translation>Wszystkie opcje działają bez odblokowania CPU: wybór 16 przy dostępnych 12 wątkach użyje 12. Wykorzystanie pełnych 16 wymaga odblokowania CPU i widoczności 16 wątków w systemie. Auto używa maks. 8. Zmiana działa od następnego połączenia; więcej wątków nie zawsze oznacza szybsze dekodowanie.</translation>
+    </message>
+    <message>
         <location filename="../gui/SettingsView.qml" line="13"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>

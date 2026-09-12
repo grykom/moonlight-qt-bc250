@@ -261,7 +261,8 @@ void Session::clSetControllerLED(uint16_t controllerNumber, uint8_t r, uint8_t g
 
 bool Session::chooseDecoder(StreamingPreferences::VideoDecoderSelection vds,
                             SDL_Window* window, int videoFormat, int width, int height,
-                            int frameRate, bool enableVsync, bool enableFramePacing, bool testOnly, IVideoDecoder*& chosenDecoder)
+                            int frameRate, bool enableVsync, bool enableFramePacing, bool testOnly, IVideoDecoder*& chosenDecoder,
+                            int softwareDecoderThreads)
 {
     DECODER_PARAMETERS params;
 
@@ -279,6 +280,9 @@ bool Session::chooseDecoder(StreamingPreferences::VideoDecoderSelection vds,
     params.enableFramePacing = enableFramePacing;
     params.testOnly = testOnly;
     params.vds = vds;
+    // Session callers pass their snapshot. Standalone capability probes use the current setting.
+    params.softwareDecoderThreads = softwareDecoderThreads > 0 ? softwareDecoderThreads :
+                StreamingPreferences::get()->getEffectiveSoftwareDecoderThreads();
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                 "V-sync %s",
@@ -491,7 +495,7 @@ bool Session::populateDecoderProperties(SDL_Window* window)
                        m_StreamConfig.width,
                        m_StreamConfig.height,
                        m_StreamConfig.fps,
-                       false, false, true, decoder)) {
+                       false, false, true, decoder, m_SoftwareDecoderThreads)) {
         return false;
     }
 
@@ -539,6 +543,7 @@ bool Session::populateDecoderProperties(SDL_Window* window)
 
 Session::Session(NvComputer* computer, NvApp& app, StreamingPreferences *preferences)
     : m_Preferences(preferences ? preferences : StreamingPreferences::get()),
+      m_SoftwareDecoderThreads(m_Preferences->getEffectiveSoftwareDecoderThreads()),
       m_IsFullScreen(m_Preferences->windowMode != StreamingPreferences::WM_WINDOWED || !WMUtils::isRunningDesktopEnvironment()),
       m_Computer(computer),
       m_App(app),
@@ -2212,7 +2217,7 @@ void Session::execInternal()
                                    enableVsync,
                                    enableVsync && m_Preferences->framePacing,
                                    false,
-                                   s_ActiveSession->m_VideoDecoder)) {
+                                   s_ActiveSession->m_VideoDecoder, m_SoftwareDecoderThreads)) {
                     SDL_AtomicUnlock(&m_DecoderLock);
                     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                                  "Failed to recreate decoder after reset");
@@ -2363,4 +2368,3 @@ DispatchDeferredCleanup:
     // reference.
     QThreadPool::globalInstance()->start(new DeferredSessionCleanupTask(this));
 }
-

@@ -1527,6 +1527,60 @@ Flickable {
 
                 Label {
                     width: parent.width
+                    text: qsTr("CPU decoder threads (BC-250)")
+                    font.pointSize: 12
+                    wrapMode: Text.Wrap
+                }
+
+                AutoResizingComboBox {
+                    id: softwareDecoderThreadsComboBox
+                    enabled: StreamingPreferences.videoDecoderSelection !== StreamingPreferences.VDS_FORCE_HARDWARE
+                    textRole: "text"
+                    model: ListModel {
+                        id: softwareDecoderThreadsModel
+                        ListElement { text: qsTr("Automatic (up to 8)"); val: 0 }
+                        ListElement { text: "4"; val: 4 }
+                        ListElement { text: "8"; val: 8 }
+                        ListElement { text: "12"; val: 12 }
+                        ListElement { text: "16"; val: 16 }
+                    }
+
+                    Component.onCompleted: {
+                        currentIndex = 0
+                        for (var i = 0; i < softwareDecoderThreadsModel.count; i++) {
+                            if (softwareDecoderThreadsModel.get(i).val === StreamingPreferences.softwareDecoderThreads) {
+                                currentIndex = i
+                                break
+                            }
+                        }
+                        recalculateWidth()
+                    }
+
+                    onActivated: {
+                        StreamingPreferences.softwareDecoderThreads = softwareDecoderThreadsModel.get(currentIndex).val
+                        StreamingPreferences.save()
+                        recalculateWidth()
+                    }
+                }
+
+                Label {
+                    width: parent.width
+                    text: qsTr("Available CPU threads: %1. CPU decoding will use: %2.")
+                        .arg(StreamingPreferences.availableDecoderThreads)
+                        .arg(StreamingPreferences.effectiveSoftwareDecoderThreads)
+                    font.pointSize: 10
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    width: parent.width
+                    text: qsTr("All options work without CPU unlock: selecting 16 with 12 available threads uses 12. Using all 16 requires CPU unlock and 16 threads visible to the system. Auto uses up to 8. Changes apply to the next connection; more threads are not always faster.")
+                    font.pointSize: 10
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    width: parent.width
                     id: resVCCTitle
                     text: qsTr("Video codec")
                     font.pointSize: 12

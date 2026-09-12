@@ -6,8 +6,6 @@
 
 #define SDL_CODE_FRAME_READY 0
 
-#define MAX_SLICES 8
-
 typedef struct _VIDEO_STATS {
     uint32_t receivedFrames;
     uint32_t decodedFrames;
@@ -35,6 +33,7 @@ typedef struct _VIDEO_STATS {
 typedef struct _DECODER_PARAMETERS {
     SDL_Window* window;
     StreamingPreferences::VideoDecoderSelection vds;
+    int softwareDecoderThreads;
 
     int videoFormat;
     int width;

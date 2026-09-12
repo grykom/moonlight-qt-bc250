@@ -188,7 +188,8 @@ private:
                        SDL_Window* window, int videoFormat, int width, int height,
                        int frameRate, bool enableVsync, bool enableFramePacing,
                        bool testOnly,
-                       IVideoDecoder*& chosenDecoder);
+                       IVideoDecoder*& chosenDecoder,
+                       int softwareDecoderThreads = 0);
 
     static
     void clStageStarting(int stage);
@@ -241,6 +242,7 @@ private:
     int drSubmitDecodeUnit(PDECODE_UNIT du);
 
     StreamingPreferences* m_Preferences;
+    const int m_SoftwareDecoderThreads; // Snapshot shared by negotiation and decoder recreation
     bool m_IsFullScreen;
     SupportedVideoFormatList m_SupportedVideoFormats; // Sorted in order of descending priority
     STREAM_CONFIGURATION m_StreamConfig;

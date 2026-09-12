@@ -122,10 +122,11 @@ int FFmpegVideoDecoder::getDecoderCapabilities()
         capabilities = m_BackendRenderer->getDecoderCapabilities();
 
         if (!isHardwareAccelerated()) {
-            // Slice up to 4 times for parallel CPU decoding, once slice per core
-            int slices = qMin(MAX_SLICES, SDL_GetCPUCount());
+            // Request one slice per configured CPU decoding thread.
+            // The host encoder may impose a lower slice limit.
+            int slices = m_SoftwareDecoderThreads;
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                        "Encoder configured for %d slices per frame",
+                        "Requesting %d slices per frame for software decoding",
                         slices);
             capabilities |= CAPABILITY_SLICES_PER_FRAME(slices);
 
@@ -221,6 +222,7 @@ FFmpegVideoDecoder::FFmpegVideoDecoder(bool testOnly)
       m_FramesOut(0),
       m_LastFrameNumber(0),
       m_StreamFps(0),
+      m_SoftwareDecoderThreads(1),
       m_VideoFormat(0),
       m_NeedsSpsFixup(false),
       m_TestOnly(testOnly),
@@ -474,7 +476,12 @@ bool FFmpegVideoDecoder::completeInitialization(const AVCodec* decoder, enum AVP
     // Enable slice multi-threading for software decoding
     if (!isHardwareAccelerated()) {
         m_VideoDecoderCtx->thread_type = FF_THREAD_SLICE;
-        m_VideoDecoderCtx->thread_count = qMin(MAX_SLICES, SDL_GetCPUCount());
+        m_VideoDecoderCtx->thread_count = m_SoftwareDecoderThreads;
+        if (!m_TestOnly && !testFrame) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                        "BC-250: configuring %d CPU decoder threads for %s",
+                        m_SoftwareDecoderThreads, decoder->name);
+        }
     }
     else {
         // No threading for HW decode
@@ -1417,6 +1424,8 @@ bool FFmpegVideoDecoder::tryInitializeNonHwAccelDecoder(PDECODER_PARAMETERS para
 
 bool FFmpegVideoDecoder::initialize(PDECODER_PARAMETERS params)
 {
+    m_SoftwareDecoderThreads = params->softwareDecoderThreads;
+
     // Increase log level until the first frame is decoded
     av_log_set_level(AV_LOG_DEBUG);
 
@@ -1872,4 +1881,3 @@ void FFmpegVideoDecoder::renderFrameOnMainThread()
 {
     m_Pacer->renderOnMainThread();
 }
-
